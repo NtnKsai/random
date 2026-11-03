@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#3157d5" />
+  <meta name="description" content="โปรแกรมสุ่มตัวเลขและสุ่มรายชื่อ พร้อมประวัติและระบบย้อนกลับ" />
+  <title>โปรแกรมสุ่ม</title>
+  <style>
+    :root {
+      --ink: #17233f; --muted: #71809d; --line: #e7ebf4; --blue: #3157d5;
+      --blue-dark: #2344b5; --blue-soft: #edf2ff; --green: #16845b;
+      --green-soft: #eaf8f1; --red: #c64e5b; --surface: #fff; --bg: #f4f6fb;
+      --shadow: 0 18px 50px rgba(31, 51, 104, .09);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--ink);
+      background: radial-gradient(circle at 8% 0%, rgba(84,119,238,.12), transparent 28rem),
+                  radial-gradient(circle at 100% 12%, rgba(79,190,160,.09), transparent 24rem), var(--bg);
+      font-family: "Leelawadee UI", "Noto Sans Thai", Tahoma, sans-serif;
+    }
+    button, input, textarea { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .shell { width: min(1080px, calc(100% - 36px)); margin: 0 auto; padding: 30px 0 42px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; color: white;
+      background: linear-gradient(145deg, #5278ed, #294dc3); box-shadow: 0 8px 18px rgba(49,87,213,.25); }
+    .brand-mark svg { width: 24px; height: 24px; }
+    h1 { font-size: clamp(22px, 3vw, 29px); line-height: 1.25; margin: 0; letter-spacing: -.02em; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .stat { background: rgba(255,255,255,.88); border: 1px solid var(--line); border-radius: 17px; padding: 15px 18px; box-shadow: 0 5px 20px rgba(25,43,90,.025); }
+    .stat-label { color: var(--muted); font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+    .stat-value { font-size: 25px; line-height: 1.1; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .stat-value.blue { color: var(--blue); } .stat-value.green { color: var(--green); }
+    .layout { display: grid; grid-template-columns: 320px minmax(0,1fr); gap: 18px; align-items: stretch; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 21px; box-shadow: var(--shadow); }
+    .setup { padding: 21px; }
+    .section-title { display: flex; align-items: center; gap: 9px; font-size: 16px; font-weight: 850; margin: 0 0 7px; }
+    .section-title svg { width: 19px; height: 19px; color: var(--blue); flex: 0 0 auto; }
+    .helper { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0 0 17px; }
+    .mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 5px; margin: 13px 0 19px; border-radius: 14px; background: #f1f3f9; border: 1px solid #e8ebf3; }
+    .mode-btn { min-height: 42px; border: 0; border-radius: 10px; background: transparent; color: #66738d; font-size: 13px; font-weight: 800; cursor: pointer; }
+    .mode-btn.active { color: var(--blue); background: #fff; box-shadow: 0 3px 10px rgba(35,52,100,.09); }
+    .field { margin-bottom: 14px; }
+    label { display: block; color: #495775; font-size: 13px; font-weight: 750; margin-bottom: 7px; }
+    input, textarea { width: 100%; border: 1px solid #dce2ef; border-radius: 12px; background: #fbfcff; color: var(--ink); padding: 11px 13px; outline: none; transition: border .18s, box-shadow .18s; }
+    input { height: 46px; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    textarea { min-height: 195px; resize: vertical; line-height: 1.65; font-size: 14px; }
+    input:focus, textarea:focus { border-color: #8299ee; box-shadow: 0 0 0 4px rgba(49,87,213,.10); }
+    .range-preview { background: #f6f8ff; border: 1px dashed #cbd5f5; border-radius: 12px; padding: 11px 12px; margin: 3px 0 16px; }
+    .range-preview span { display: block; color: var(--muted); font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+    .range-preview strong { color: #344c9d; font-size: 14px; }
+    .name-tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: -4px 0 14px; }
+    .name-hint { color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .text-button { border: 0; background: transparent; color: var(--red); padding: 5px 3px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+    .primary, .secondary, .remove-btn { border: 0; border-radius: 12px; min-height: 46px; padding: 0 15px; cursor: pointer; font-weight: 800; transition: transform .15s, box-shadow .15s, background .15s, opacity .15s; }
+    .primary { color: #fff; background: linear-gradient(135deg, #4169e1, #2d50c6); box-shadow: 0 8px 17px rgba(49,87,213,.20); }
+    .primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 11px 22px rgba(49,87,213,.26); }
+    .secondary { color: #53617d; background: #f1f3f8; border: 1px solid #e6e9f1; }
+    .secondary:hover:not(:disabled) { background: #e9edf6; }
+    button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
+    .setup-actions { display: grid; gap: 9px; }
+    .main-panel { padding: 22px; display: flex; flex-direction: column; }
+    .draw-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .draw-head .helper { margin: 0; }
+    .live-pill { color: var(--green); background: var(--green-soft); border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 850; white-space: nowrap; }
+    .result-card { min-height: 242px; margin: 17px 0 15px; border-radius: 18px; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: linear-gradient(145deg,#f1f5ff,#f8faff 55%,#eef4ff); border: 1px solid #e2e9ff; }
+    .result-card::before, .result-card::after { content: ""; position: absolute; border-radius: 50%; border: 1px solid rgba(75,106,213,.10); pointer-events: none; }
+    .result-card::before { width: 220px; height: 220px; right: -75px; top: -120px; }
+    .result-card::after { width: 170px; height: 170px; left: -65px; bottom: -100px; }
+    .result-label { position: relative; z-index: 1; color: #7181af; font-size: 13px; font-weight: 800; }
+    .result-number { position: relative; z-index: 1; color: var(--blue); font-size: clamp(76px,13vw,112px); line-height: 1.12; font-weight: 900; letter-spacing: -.055em; font-variant-numeric: tabular-nums; text-shadow: 0 7px 18px rgba(49,87,213,.10); }
+    .result-number.name-result { max-width: 100%; padding: 0 18px; font-size: clamp(27px,6vw,48px); line-height: 1.35; letter-spacing: 0; overflow-wrap: anywhere; }
+    .result-note { position: relative; z-index: 1; color: #8190b5; font-size: 12px; margin-top: 4px; padding: 0 12px; }
+    .draw-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+    .draw-actions button { min-width: 0; padding-inline: 10px; }
+    .remove-btn { color: #fff; background: linear-gradient(135deg,#19966a,#117a55); box-shadow: 0 8px 17px rgba(22,132,91,.16); }
+    .remove-btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .message { min-height: 22px; margin: 12px 2px 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .message.success { color: var(--green); font-weight: 700; } .message.error { color: var(--red); font-weight: 700; }
+    .lower { display: grid; grid-template-columns: 1.05fr .95fr; gap: 18px; margin-top: 18px; }
+    .list-panel { padding: 19px 21px; min-height: 150px; }
+    .list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+    .list-heading h2 { font-size: 14px; margin: 0; font-weight: 850; }
+    .count-badge { color: #64718c; background: #f1f3f8; border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .number-chips { display: flex; flex-wrap: wrap; gap: 7px; max-height: 150px; overflow: auto; padding: 1px 3px 3px 1px; }
+    .chip { min-width: 34px; min-height: 31px; padding: 5px 9px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; background: #f3f6ff; border: 1px solid #e4eaff; color: #4960ad; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .chip.current { color: #fff; background: var(--blue); border-color: var(--blue); box-shadow: 0 4px 10px rgba(49,87,213,.20); }
+    .chip.name-chip { max-width: 100%; min-height: 34px; justify-content: flex-start; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+    .empty { color: #9aa4b8; font-size: 12px; padding: 5px 0; }
+    .history { display: flex; flex-direction: column; gap: 7px; max-height: 180px; overflow: auto; }
+    .history-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; color: #53617d; font-size: 12px; padding-bottom: 7px; border-bottom: 1px solid #f0f2f7; }
+    .history-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .history-row strong { color: var(--green); font-size: 13px; font-weight: 800; text-align: right; overflow-wrap: anywhere; }
+    .history-header-tools { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .undo-btn { min-height: 34px; padding: 0 10px; border-radius: 10px; color: #5146a5; background: #f0efff; border: 1px solid #dedbff; font-size: 11px; white-space: nowrap; }
+    .undo-btn:hover:not(:disabled) { background: #e7e5ff; }
+    .footer-note { text-align: center; color: #9aa4b8; font-size: 11px; margin-top: 17px; }
+    .confetti { animation: pop .35s ease-out; }
+    @keyframes pop { from { transform: scale(.65); opacity: .35; } to { transform: scale(1); opacity: 1; } }
+    dialog { width: min(420px,calc(100% - 32px)); border: 1px solid var(--line); border-radius: 20px; padding: 0; color: var(--ink); box-shadow: 0 24px 80px rgba(18,31,68,.24); }
+    dialog::backdrop { background: rgba(19,30,58,.45); backdrop-filter: blur(3px); }
+    .dialog-inner { padding: 23px; }
+    .dialog-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; color: #5146a5; background: #f0efff; font-size: 23px; margin-bottom: 13px; }
+    .dialog-inner h2 { margin: 0 0 7px; font-size: 18px; }
+    .dialog-inner p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+    .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 21px; }
+    .dialog-actions button { min-height: 43px; }
+    @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } .setup { order: 2; } .main-panel { order: 1; } .lower { grid-template-columns: 1fr; } }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 24px,560px); padding-top: 20px; }
+      .stats { gap: 8px; } .stat { padding: 12px; border-radius: 14px; } .stat-value { font-size: 21px; }
+      .main-panel, .setup { padding: 17px; } .result-card { min-height: 210px; }
+      .draw-actions { grid-template-columns: 1fr; }
+      .list-panel { padding: 17px; }
+      .list-heading { align-items: flex-start; }
+      .history-header-tools { gap: 6px; }
+      .undo-btn { font-size: 10px; padding: 0 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/></svg>
+        </div>
+        <h1>โปรแกรมสุ่ม</h1>
+      </div>
+    </header>
+
+    <section class="stats" aria-label="สรุปจำนวนรายการ">
+      <div class="stat"><div class="stat-label">จำนวนทั้งหมด</div><div class="stat-value" id="totalCount">20</div></div>
+      <div class="stat"><div class="stat-label">คงเหลือ</div><div class="stat-value blue" id="remainingCount">20</div></div>
+      <div class="stat"><div class="stat-label">สุ่มและยืนยันแล้ว</div><div class="stat-value green" id="drawnCount">0</div></div>
+    </section>
+
+    <section class="layout">
+      <aside class="panel setup">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h16"/><circle cx="8" cy="5" r="2" fill="white"/><circle cx="15" cy="12" r="2" fill="white"/><circle cx="10" cy="19" r="2" fill="white"/></svg>
+          เลือกรูปแบบการสุ่ม
+        </h2>
+        <div class="mode-switch" role="group" aria-label="เลือกรูปแบบการสุ่ม">
+          <button class="mode-btn active" id="numberModeBtn" type="button" aria-pressed="true">สุ่มตัวเลข</button>
+          <button class="mode-btn" id="nameModeBtn" type="button" aria-pressed="false">สุ่มรายชื่อ</button>
+        </div>
+
+        <div id="numberSetup">
+          <h3 class="section-title">ตั้งค่าชุดตัวเลข</h3>
+          <p class="helper">กำหนดเลขเริ่มต้นและจำนวนทั้งหมด ระบบจะสร้างเลขเรียงต่อกันให้อัตโนมัติ</p>
+          <div class="field"><label for="startNumber">เลขเริ่มต้น</label><input id="startNumber" type="number" inputmode="numeric" value="1" step="1" /></div>
+          <div class="field"><label for="numberCount">จำนวนตัวเลขทั้งหมด</label><input id="numberCount" type="number" inputmode="numeric" value="20" min="1" max="1000" step="1" /></div>
+          <div class="range-preview"><span>ชุดตัวเลขที่จะสร้าง</span><strong id="rangePreview">1 – 20 (ทั้งหมด 20 ตัว)</strong></div>
+        </div>
+
+        <div id="nameSetup" hidden>
+          <h3 class="section-title">เพิ่มรายชื่อ</h3>
+          <p class="helper">พิมพ์หรือคัดลอกรายชื่อมาวางได้ โดยใส่หนึ่งรายชื่อต่อหนึ่งบรรทัด รองรับชื่อและนามสกุลที่มีช่องว่างภายใน</p>
+          <div class="field">
+            <label for="nameInput">รายชื่อนักเรียน</label>
+            <textarea id="nameInput" spellcheck="false" placeholder="สมชาย ใจดี&#10;สมหญิง รักเรียน&#10;สมศักดิ์ ขยันดี&#10;สมปอง ตั้งใจ"></textarea>
+          </div>
+          <div class="name-tools"><span class="name-hint">ระบบนับรายชื่อจากการขึ้นบรรทัดใหม่เท่านั้น</span><button class="text-button" id="clearNamesBtn" type="button">ล้างรายชื่อ</button></div>
+          <div class="range-preview"><span>จำนวนรายชื่อที่ตรวจพบ</span><strong id="namePreview">0 รายชื่อ</strong></div>
+        </div>
+
+        <div class="setup-actions">
+          <button class="primary" id="createBtn" type="button">สร้าง / เริ่มชุดตัวเลขใหม่</button>
+          <button class="secondary" id="resetBtn" type="button">เริ่มสุ่มใหม่จากชุดเดิม</button>
+        </div>
+      </aside>
+
+      <section class="panel main-panel">
+        <div class="draw-head">
+          <div><h2 class="section-title">ผลการสุ่ม</h2><p class="helper" id="drawHelper">กดสุ่ม แล้วนำหมายเลขที่ได้ออกก่อนสุ่มคนถัดไป</p></div>
+          <span class="live-pill">● พร้อมใช้งาน</span>
+        </div>
+        <div class="result-card" aria-live="polite" aria-atomic="true">
+          <div class="result-label" id="resultLabel">หมายเลขที่สุ่มได้</div>
+          <div class="result-number" id="resultNumber">—</div>
+          <div class="result-note" id="resultNote">กดปุ่มด้านล่างเพื่อเริ่มสุ่ม</div>
+        </div>
+        <div class="draw-actions">
+          <button class="primary" id="drawBtn" type="button">สุ่มหมายเลข</button>
+          <button class="remove-btn" id="removeBtn" type="button" disabled>✓ นำเลขนี้ออกจากรายการ</button>
+        </div>
+        <p class="message" id="message" role="status">เมื่อสุ่มได้แล้ว กดปุ่มยืนยันเพื่อนำรายการออกจากตัวเลือก</p>
+      </section>
+    </section>
+
+    <section class="lower">
+      <div class="panel list-panel">
+        <div class="list-heading"><h2 id="remainingTitle">หมายเลขที่ยังเหลือ</h2><span class="count-badge" id="remainingBadge">20 ตัว</span></div>
+        <div class="number-chips" id="remainingList"><span class="chip">1</span></div>
+      </div>
+      <div class="panel list-panel">
+        <div class="list-heading">
+          <h2>ประวัติการสุ่ม</h2>
+          <div class="history-header-tools">
+            <span class="count-badge" id="historyBadge">0 รายการ</span>
+            <button class="undo-btn" id="undoBtn" type="button" disabled>↶ ย้อนกลับ 1 ลำดับ</button>
+          </div>
+        </div>
+        <div class="history" id="historyList"><div class="empty">ยังไม่มีรายการที่ยืนยันแล้ว</div></div>
+      </div>
+    </section>
+    <div class="footer-note">ข้อมูลจะบันทึกอัตโนมัติในเบราว์เซอร์เครื่องนี้</div>
+  </main>
+
+  <dialog id="undoDialog" aria-labelledby="undoDialogTitle" aria-describedby="undoDialogText">
+    <div class="dialog-inner">
+      <div class="dialog-icon" aria-hidden="true">↶</div>
+      <h2 id="undoDialogTitle">ยืนยันการย้อนกลับ</h2>
+      <p id="undoDialogText">คุณต้องการย้อนกลับผลการสุ่มรายการล่าสุดใช่หรือไม่?</p>
+      <div class="dialog-actions">
+        <button class="secondary" id="cancelUndoBtn" type="button">ยกเลิก</button>
+        <button class="primary" id="confirmUndoBtn" type="button">ยืนยันย้อนกลับ</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    (() => {
+      'use strict';
+      const STORAGE_KEY = 'classroom-seat-picker-v2';
+      const LEGACY_KEY = 'classroom-seat-number-picker-v1';
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        numberMode: $('numberModeBtn'), nameMode: $('nameModeBtn'), numberSetup: $('numberSetup'), nameSetup: $('nameSetup'),
+        start: $('startNumber'), count: $('numberCount'), nameInput: $('nameInput'), clearNames: $('clearNamesBtn'),
+        rangePreview: $('rangePreview'), namePreview: $('namePreview'),
+        total: $('totalCount'), remainingCount: $('remainingCount'), drawnCount: $('drawnCount'),
+        remainingTitle: $('remainingTitle'), remainingBadge: $('remainingBadge'), historyBadge: $('historyBadge'),
+        remainingList: $('remainingList'), historyList: $('historyList'),
+        drawHelper: $('drawHelper'), resultNumber: $('resultNumber'), resultLabel: $('resultLabel'), resultNote: $('resultNote'),
+        draw: $('drawBtn'), remove: $('removeBtn'), create: $('createBtn'), reset: $('resetBtn'), message: $('message'),
+        undo: $('undoBtn'), undoDialog: $('undoDialog'), undoDialogText: $('undoDialogText'),
+        cancelUndo: $('cancelUndoBtn'), confirmUndo: $('confirmUndoBtn')
+      };
+
+      function makeNumberItems(start, count) {
+        return Array.from({ length: count }, (_, index) => ({ id: `number-${start + index}`, value: start + index, index }));
+      }
+      function emptyNumberSession(start = 1, count = 20) {
+        return { start, count, remaining: makeNumberItems(start, count), drawn: [], current: null };
+      }
+      function emptyNameSession(sourceNames = '') {
+        return { sourceNames, remaining: [], drawn: [], current: null };
+      }
+      const app = {
+        activeMode: 'numbers',
+        sessions: { numbers: emptyNumberSession(), names: emptyNameSession() }
+      };
+      let messageState = { text: 'เมื่อสุ่มได้แล้ว กดปุ่มยืนยันเพื่อนำรายการออกจากตัวเลือก', type: '' };
+
+      function parseNames(text) {
+        return String(text || '').split(/\r\n|\n|\r/).map(line => line.trim()).filter(line => line.length > 0);
+      }
+      function nameItems(names) {
+        return names.map((name, index) => ({ id: `name-${index}`, value: name, index }));
+      }
+      function getSession(mode = app.activeMode) { return app.sessions[mode]; }
+      function getMode() { return app.activeMode; }
+      function getItemsTotal(session, mode = app.activeMode) {
+        return mode === 'numbers' ? session.count : session.remaining.length + session.drawn.length;
+      }
+      function displayValue(item, mode = app.activeMode) {
+        return mode === 'numbers' ? Number(item.value).toLocaleString('th-TH') : String(item.value);
+      }
+      function unitWord(mode = app.activeMode) { return mode === 'numbers' ? 'ตัว' : 'รายชื่อ'; }
+      function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(app)); } catch (_) { /* storage may be unavailable */ }
+      }
+      function isValidItems(session, mode) {
+        if (!Array.isArray(session.remaining) || !Array.isArray(session.drawn)) return false;
+        const all = [...session.remaining, ...session.drawn];
+        if (session.current !== null && !session.remaining.some(item => item.id === session.current.id)) return false;
+        if (all.some(item => !item || typeof item.id !== 'string' || !Number.isInteger(item.index) || item.index < 0)) return false;
+        if (mode === 'numbers' && all.some(item => !Number.isSafeInteger(item.value))) return false;
+        if (mode === 'names' && all.some(item => typeof item.value !== 'string' || !item.value.trim())) return false;
+        if (new Set(all.map(item => item.id)).size !== all.length) return false;
+        if (session.current && (!session.current.id || !all.some(item => item.id === session.current.id))) return false;
+        return true;
+      }
+      function validNumberSession(session) {
+        if (!session || !Number.isSafeInteger(session.start) || !Number.isInteger(session.count) || session.count < 1 || session.count > 1000) return false;
+        if (!Number.isSafeInteger(session.start + session.count - 1)) return false;
+        if (!isValidItems(session, 'numbers')) return false;
+        return session.remaining.length + session.drawn.length === session.count;
+      }
+      function validNameSession(session) {
+        if (!session || typeof session.sourceNames !== 'string' || !isValidItems(session, 'names')) return false;
+        return true;
+      }
+      function migrateLegacy() {
+        try {
+          const raw = localStorage.getItem(LEGACY_KEY);
+          if (!raw) return false;
+          const old = JSON.parse(raw);
+          if (!Number.isSafeInteger(old.start) || !Number.isInteger(old.count) || old.count < 1 || old.count > 1000) return false;
+          const all = makeNumberItems(old.start, old.count);
+          const byValue = new Map(all.map(item => [item.value, item]));
+          const convert = arr => Array.isArray(arr) ? arr.map(value => byValue.get(value)).filter(Boolean) : [];
+          const remaining = convert(old.remaining);
+          const drawn = convert(old.drawn);
+          const current = old.current === null ? null : byValue.get(old.current) || null;
+          const unique = new Set([...remaining, ...drawn].map(item => item.id));
+          if (unique.size !== old.count || remaining.length + drawn.length !== old.count) return false;
+          app.sessions.numbers = { start: old.start, count: old.count, remaining, drawn, current };
+          return true;
+        } catch (_) { return false; }
+      }
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const data = JSON.parse(raw);
+            if (data && data.sessions && ['numbers', 'names'].includes(data.activeMode) && validNumberSession(data.sessions.numbers) && validNameSession(data.sessions.names)) {
+              app.activeMode = data.activeMode;
+              app.sessions = data.sessions;
+              return;
+            }
+          }
+        } catch (_) { /* load defaults when saved data is not readable */ }
+        if (migrateLegacy()) save();
+      }
+      function setMessage(text, type = '') {
+        messageState = { text, type };
+        els.message.textContent = text;
+        els.message.className = 'message' + (type ? ` ${type}` : '');
+      }
+      function updateNumberPreview() {
+        const start = Number(els.start.value), count = Number(els.count.value);
+        if (Number.isSafeInteger(start) && Number.isInteger(count) && count > 0 && count <= 1000 && Number.isSafeInteger(start + count - 1)) {
+          els.rangePreview.textContent = `${start.toLocaleString('th-TH')} – ${(start + count - 1).toLocaleString('th-TH')} (ทั้งหมด ${count.toLocaleString('th-TH')} ตัว)`;
+        } else {
+          els.rangePreview.textContent = 'กรุณากรอกเลขเริ่มต้นและจำนวน 1–1,000 ตัว';
+        }
+      }
+      function updateNamePreview() {
+        const count = parseNames(els.nameInput.value).length;
+        els.namePreview.textContent = `${count.toLocaleString('th-TH')} รายชื่อ`;
+      }
+      function syncSetup() {
+        const mode = getMode();
+        const numbers = mode === 'numbers';
+        els.numberMode.classList.toggle('active', numbers);
+        els.nameMode.classList.toggle('active', !numbers);
+        els.numberMode.setAttribute('aria-pressed', String(numbers));
+        els.nameMode.setAttribute('aria-pressed', String(!numbers));
+        els.numberSetup.hidden = !numbers;
+        els.nameSetup.hidden = numbers;
+        if (numbers) {
+          const s = getSession('numbers');
+          els.start.value = s.start; els.count.value = s.count;
+          els.create.textContent = 'สร้าง / เริ่มชุดตัวเลขใหม่';
+          els.reset.textContent = 'เริ่มสุ่มใหม่จากชุดเดิม';
+          updateNumberPreview();
+        } else {
+          const s = getSession('names');
+          els.nameInput.value = s.sourceNames;
+          els.create.textContent = 'สร้าง / เริ่มชุดรายชื่อใหม่';
+          els.reset.textContent = 'เริ่มสุ่มใหม่จากรายชื่อเดิม';
+          updateNamePreview();
+        }
+      }
+      function switchMode(mode) {
+        if (mode !== 'numbers' && mode !== 'names') return;
+        if (app.activeMode === mode) return;
+        app.activeMode = mode;
+        setMessage(mode === 'numbers' ? 'เลือกโหมดสุ่มตัวเลขแล้ว' : 'เลือกโหมดสุ่มรายชื่อแล้ว กรอกรายชื่อหนึ่งคนต่อหนึ่งบรรทัด', '');
+        syncSetup(); render();
+      }
+      function render() {
+        const mode = getMode();
+        const session = getSession();
+        const isNumbers = mode === 'numbers';
+        const pending = session.current !== null;
+        const total = getItemsTotal(session);
+        const unit = unitWord();
+        els.total.textContent = total.toLocaleString('th-TH');
+        els.remainingCount.textContent = session.remaining.length.toLocaleString('th-TH');
+        els.drawnCount.textContent = session.drawn.length.toLocaleString('th-TH');
+        els.remainingTitle.textContent = isNumbers ? 'หมายเลขที่ยังเหลือ' : 'รายชื่อที่ยังเหลือ';
+        els.remainingBadge.textContent = `${session.remaining.length.toLocaleString('th-TH')} ${unit}`;
+        els.historyBadge.textContent = `${session.drawn.length.toLocaleString('th-TH')} รายการ`;
+        els.remainingList.replaceChildren();
+        if (!session.remaining.length) {
+          const empty = document.createElement('span'); empty.className = 'empty';
+          empty.textContent = total === 0 ? (isNumbers ? 'ยังไม่มีชุดตัวเลข' : 'ยังไม่มีรายชื่อ') : (isNumbers ? 'สุ่มครบทุกหมายเลขแล้ว' : 'สุ่มครบทุกชื่อแล้ว');
+          els.remainingList.append(empty);
+        } else {
+          session.remaining.forEach(item => {
+            const chip = document.createElement('span');
+            chip.className = 'chip' + (isNumbers ? '' : ' name-chip') + (pending && item.id === session.current.id ? ' current' : '');
+            chip.textContent = displayValue(item);
+            els.remainingList.append(chip);
+          });
+        }
+        els.historyList.replaceChildren();
+        if (!session.drawn.length) {
+          const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'ยังไม่มีรายการที่ยืนยันแล้ว'; els.historyList.append(empty);
+        } else {
+          session.drawn.forEach((item, index) => {
+            const row = document.createElement('div'); row.className = 'history-row';
+            const label = document.createElement('span'); label.textContent = `ลำดับที่ ${(index + 1).toLocaleString('th-TH')}`;
+            const value = document.createElement('strong'); value.textContent = displayValue(item);
+            row.append(label, value); els.historyList.append(row);
+          });
+        }
+        els.draw.textContent = isNumbers ? 'สุ่มหมายเลข' : 'สุ่มรายชื่อ';
+        els.remove.textContent = isNumbers ? '✓ นำเลขนี้ออกจากรายการ' : '✓ ยืนยันนำรายชื่อนี้ออก';
+        els.drawHelper.textContent = isNumbers ? 'กดสุ่ม แล้วนำหมายเลขที่ได้ออกก่อนสุ่มคนถัดไป' : 'กดสุ่มรายชื่อ แล้วยืนยันก่อนสุ่มคนถัดไป';
+        els.remove.disabled = !pending;
+        els.draw.disabled = session.remaining.length === 0 || pending;
+        els.undo.disabled = !pending && session.drawn.length === 0;
+        els.resultNumber.classList.toggle('name-result', !isNumbers);
+        if (pending) {
+          els.resultLabel.textContent = isNumbers ? 'หมายเลขที่สุ่มได้' : 'รายชื่อที่สุ่มได้';
+          els.resultNumber.textContent = displayValue(session.current);
+          els.resultNumber.classList.remove('confetti'); void els.resultNumber.offsetWidth; els.resultNumber.classList.add('confetti');
+          els.resultNote.textContent = 'ตรวจสอบผล แล้วกดปุ่มยืนยันเพื่อนำออกจากรายการ';
+        } else if (!session.remaining.length && total > 0) {
+          els.resultLabel.textContent = 'ดำเนินการครบแล้ว';
+          els.resultNumber.textContent = '✓';
+          els.resultNote.textContent = isNumbers ? 'สุ่มครบทุกหมายเลขแล้ว' : 'สุ่มครบทุกชื่อแล้ว';
+        } else if (!total) {
+          els.resultLabel.textContent = isNumbers ? 'หมายเลขที่สุ่มได้' : 'รายชื่อที่สุ่มได้';
+          els.resultNumber.textContent = '—';
+          els.resultNote.textContent = isNumbers ? 'สร้างชุดตัวเลขเพื่อเริ่มสุ่ม' : 'เพิ่มรายชื่อเพื่อเริ่มสุ่ม';
+        } else if (session.drawn.length) {
+          els.resultLabel.textContent = isNumbers ? 'พร้อมสุ่มหมายเลขถัดไป' : 'พร้อมสุ่มรายชื่อถัดไป';
+          els.resultNumber.textContent = '—';
+          els.resultNote.textContent = `เหลืออีก ${session.remaining.length.toLocaleString('th-TH')} ${unit}`;
+        } else {
+          els.resultLabel.textContent = isNumbers ? 'หมายเลขที่สุ่มได้' : 'รายชื่อที่สุ่มได้';
+          els.resultNumber.textContent = '—';
+          els.resultNote.textContent = 'กดปุ่มด้านล่างเพื่อเริ่มสุ่ม';
+        }
+        els.message.textContent = messageState.text;
+        els.message.className = 'message' + (messageState.type ? ` ${messageState.type}` : '');
+        save();
+      }
+      function createNumberSet() {
+        const start = Number(els.start.value), count = Number(els.count.value);
+        if (!Number.isSafeInteger(start)) { setMessage('กรุณากรอกเลขเริ่มต้นเป็นจำนวนเต็ม', 'error'); els.start.focus(); return; }
+        if (!Number.isInteger(count) || count < 1 || count > 1000) { setMessage('จำนวนตัวเลขต้องอยู่ระหว่าง 1 ถึง 1,000 ตัว', 'error'); els.count.focus(); return; }
+        if (!Number.isSafeInteger(start + count - 1)) { setMessage('ช่วงตัวเลขมีค่ามากเกินไป กรุณาตรวจสอบอีกครั้ง', 'error'); return; }
+        app.sessions.numbers = emptyNumberSession(start, count);
+        setMessage(`สร้างชุดตัวเลข ${start.toLocaleString('th-TH')} ถึง ${(start + count - 1).toLocaleString('th-TH')} เรียบร้อยแล้ว`, 'success');
+        render();
+      }
+      function createNameSet() {
+        const source = els.nameInput.value;
+        const names = parseNames(source);
+        if (!names.length) { setMessage('กรุณาเพิ่มรายชื่ออย่างน้อย 1 รายชื่อ โดยใส่หนึ่งรายชื่อต่อหนึ่งบรรทัด', 'error'); els.nameInput.focus(); return; }
+        app.sessions.names = { sourceNames: source, remaining: nameItems(names), drawn: [], current: null };
+        setMessage(`เพิ่มรายชื่อ ${names.length.toLocaleString('th-TH')} รายชื่อเรียบร้อยแล้ว`, 'success');
+        render();
+      }
+      function drawItem() {
+        const session = getSession();
+        if (session.current !== null || session.remaining.length === 0) return;
+        const index = Math.floor(Math.random() * session.remaining.length);
+        session.current = session.remaining[index];
+        setMessage(getMode() === 'numbers' ? 'สุ่มได้หมายเลขแล้ว กดปุ่มยืนยันเพื่อนำออกจากรายการ' : 'สุ่มได้รายชื่อแล้ว กดปุ่มยืนยันเพื่อนำออกจากรายการ', 'success');
+        render();
+      }
+      function removeCurrent() {
+        const session = getSession();
+        if (session.current === null) return;
+        const picked = session.current;
+        session.remaining = session.remaining.filter(item => item.id !== picked.id);
+        session.drawn.push(picked);
+        session.current = null;
+        setMessage(getMode() === 'numbers' ? `ยืนยันเลข ${displayValue(picked)} แล้ว สามารถสุ่มคนถัดไปได้` : `ยืนยันรายชื่อ ${displayValue(picked)} แล้ว สามารถสุ่มคนถัดไปได้`, 'success');
+        render();
+      }
+      function requestUndo() {
+        const session = getSession();
+        if (session.current === null && session.drawn.length === 0) return;
+        if (session.current !== null) {
+          const value = displayValue(session.current);
+          els.undoDialogText.textContent = `คุณต้องการยกเลิกผลสุ่ม${getMode() === 'numbers' ? 'หมายเลข' : 'รายชื่อ'} “${value}” ที่ยังไม่ได้ยืนยันใช่หรือไม่?`;
+        } else {
+          const last = session.drawn[session.drawn.length - 1];
+          els.undoDialogText.textContent = `คุณต้องการย้อนกลับรายการล่าสุด “${displayValue(last)}” ใช่หรือไม่? รายการนี้จะกลับไปอยู่ในตัวเลือกที่ยังเหลือ`;
+        }
+        if (typeof els.undoDialog.showModal === 'function') els.undoDialog.showModal();
+        else if (window.confirm(els.undoDialogText.textContent)) performUndo();
+      }
+      function performUndo() {
+        const session = getSession();
+        if (session.current !== null) {
+          const cancelled = session.current;
+          session.current = null;
+          setMessage(`ยกเลิกผลสุ่ม “${displayValue(cancelled)}” แล้ว สามารถสุ่มใหม่ได้`, 'success');
+        } else if (session.drawn.length > 0) {
+          const restored = session.drawn.pop();
+          session.remaining.push(restored);
+          session.remaining.sort((a, b) => a.index - b.index);
+          setMessage(`ย้อนกลับแล้ว คืน “${displayValue(restored)}” กลับเข้ารายการ`, 'success');
+        }
+        if (els.undoDialog.open) els.undoDialog.close();
+        render();
+      }
+      function resetCurrentSet() {
+        if (getMode() === 'numbers') {
+          const session = getSession();
+          app.sessions.numbers = emptyNumberSession(session.start, session.count);
+          setMessage('เริ่มสุ่มใหม่จากชุดตัวเลขเดิมแล้ว', 'success');
+        } else {
+          const session = getSession();
+          const names = parseNames(session.sourceNames);
+          if (!names.length) { setMessage('ยังไม่มีรายชื่อสำหรับเริ่มสุ่ม กรุณาเพิ่มรายชื่อก่อน', 'error'); return; }
+          app.sessions.names = { sourceNames: session.sourceNames, remaining: nameItems(names), drawn: [], current: null };
+          setMessage('เริ่มสุ่มใหม่จากรายชื่อเดิมแล้ว', 'success');
+        }
+        syncSetup(); render();
+      }
+
+      els.numberMode.addEventListener('click', () => switchMode('numbers'));
+      els.nameMode.addEventListener('click', () => switchMode('names'));
+      els.start.addEventListener('input', updateNumberPreview);
+      els.count.addEventListener('input', updateNumberPreview);
+      els.nameInput.addEventListener('input', () => {
+        updateNamePreview();
+        app.sessions.names.sourceNames = els.nameInput.value;
+        save();
+      });
+      els.clearNames.addEventListener('click', () => {
+        els.nameInput.value = '';
+        app.sessions.names.sourceNames = '';
+        updateNamePreview(); save(); els.nameInput.focus();
+      });
+      els.create.addEventListener('click', () => getMode() === 'numbers' ? createNumberSet() : createNameSet());
+      els.draw.addEventListener('click', drawItem);
+      els.remove.addEventListener('click', removeCurrent);
+      els.undo.addEventListener('click', requestUndo);
+      els.confirmUndo.addEventListener('click', performUndo);
+      els.cancelUndo.addEventListener('click', () => els.undoDialog.close());
+      els.undoDialog.addEventListener('click', event => {
+        if (event.target === els.undoDialog) els.undoDialog.close();
+      });
+      els.reset.addEventListener('click', resetCurrentSet);
+
+      load();
+      syncSetup();
+      render();
+    })();
+  </script>
+</body>
+</html>
